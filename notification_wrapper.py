@@ -33,7 +33,10 @@ class WrapperComponent(Notify2Component):
         self.logger.info("Running command \"%s\"", str(self.command))
         command = Popen(self.command)
         command.wait(timeout=COMMAND_TIMEOUT_MILLIS)
-        self.logger.info("Exit code: %d", command.returncode)
+        if command.returncode != 0:
+            self.logger.critical("Exit code: %d", command.returncode)
+        else:
+            self.logger.info("Exit code: 0")
 
     def _should_run(self) -> bool:
         wifi = get_wifi_name()
