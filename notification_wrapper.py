@@ -2,6 +2,7 @@
 import logging
 from subprocess import Popen, check_output
 from sys import argv
+from typing import List
 
 from notify2 import Notification, EXPIRES_NEVER
 
@@ -13,6 +14,8 @@ ALLOWED_NETWORKS = {
 
 }
 
+COMMAND_TIMEOUT_MILLIS = 24 * 60 * 60 * 1000  # 1 day, jeez Python lacks time conversion function?...
+
 
 def get_wifi_name():
     output = check_output(['/sbin/iwgetid', '-r']).decode()
@@ -21,15 +24,15 @@ def get_wifi_name():
 
 
 class WrapperComponent(Notify2Component):
-    def __init__(self, command: str):
+    def __init__(self, command: List[str]):
         super().__init__('WrapperComponent')
         self.command = command
         self.logger = logging.getLogger('NotificationWrapper')
 
     def _run_command(self):
-        self.logger.info("Running command \"%s\"", self.command)
-        command = Popen(self.command, shell=True)
-        command.communicate()
+        self.logger.info("Running command \"%s\"", str(self.command))
+        command = Popen(self.command)
+        command.wait(timeout=COMMAND_TIMEOUT_MILLIS)
         self.logger.info("Exit code: %d", command.returncode)
 
     def _should_run(self) -> bool:
@@ -62,9 +65,8 @@ class WrapperComponent(Notify2Component):
 
 
 def main():
-    # TODO get from arguments?
-    COMMAND = argv[1]  # type: str
-    WrapperComponent(COMMAND).start()
+    command = argv[1:]  # type: List[str]
+    WrapperComponent(command).start()
 
 
 if __name__ == '__main__':

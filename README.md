@@ -16,4 +16,4 @@ Right now you should just add the names of allowed WiFi networks to `ALLOWED_NET
 
 Example:
 
-    python3 notification_wrapper.py "ls -al /bin"
+    python3 notification_wrapper.py ls -al /bin
