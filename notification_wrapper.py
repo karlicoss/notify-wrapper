@@ -53,7 +53,7 @@ class WrapperComponent(Notify2Component):
             self.finish_async()
         else:
             n = Notification(
-                summary="Trees dumper",
+                summary=str(self.command),
                 message="Run now?",  # TODO include command name
                 icon='dialog-question',
             )
