@@ -5,8 +5,8 @@ This is useful, for instance, if you got a cron job doing heavy network operatio
 
 # Requirements
 
-* notification daemon, supporting actions
-* pynotify2: `pip3 install "https://bitbucket.org/takluyver/pynotify2"`
+* notification daemon supporting actions
+* `pip3 install -r requirements.txt` 
 
 # Configuration
 
