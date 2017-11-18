@@ -1,27 +1,20 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 import logging
 from subprocess import Popen, check_output
 from sys import argv
 from typing import List
+from datetime import timedelta
 
 from notify2 import Notification, EXPIRES_NEVER
 
 from notify2_component import Notify2Component
+from config import ALLOWED_NETWORKS
+
+from kython import get_wifi_name
 
 logging.basicConfig(level=logging.INFO)
 
-ALLOWED_NETWORKS = {
-
-}
-
-COMMAND_TIMEOUT_MILLIS = 24 * 60 * 60 * 1000  # 1 day, jeez Python lacks time conversion function?...
-
-
-def get_wifi_name():
-    output = check_output(['/sbin/iwgetid', '-r']).decode()
-    name = output.strip()
-    return name
-
+COMMAND_TIMEOUT_MILLIS = timedelta(days=1).total_seconds()
 
 class WrapperComponent(Notify2Component):
     def __init__(self, command: List[str]):
