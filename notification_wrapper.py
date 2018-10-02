@@ -8,21 +8,21 @@ from datetime import timedelta
 from notify2 import Notification, EXPIRES_NEVER
 
 from notify2_component import Notify2Component
-from config import ALLOWED_NETWORKS
+from config import ALLOWED_NETWORKS, IGNORED_NETWORKS
 
-from kython import get_wifi_name
+from kython import get_networks
 
 logging.basicConfig(level=logging.INFO)
 
 COMMAND_TIMEOUT_MILLIS = timedelta(days=1).total_seconds()
 
 class WrapperComponent(Notify2Component):
-    def __init__(self, command: List[str]):
+    def __init__(self, command: List[str]) -> None:
         super().__init__('WrapperComponent')
         self.command = command
         self.logger = logging.getLogger('NotificationWrapper')
 
-    def _run_command(self):
+    def _run_command(self, n=None): # TODO notification type?
         self.logger.info("Running command \"%s\"", str(self.command))
         command = Popen(self.command)
         command.wait(timeout=COMMAND_TIMEOUT_MILLIS)
@@ -30,14 +30,23 @@ class WrapperComponent(Notify2Component):
             self.logger.critical("Exit code: %d", command.returncode)
         else:
             self.logger.info("Exit code: 0")
+        if n is not None:
+            n.close()
 
     def _should_run(self) -> bool:
-        wifi = get_wifi_name()
-        if wifi in ALLOWED_NETWORKS:
-            self.logger.info("Network %s is whitelisted", wifi)
+        networks = get_networks()
+        networks = set(networks).difference(IGNORED_NETWORKS)
+
+        if len(networks) != 1:
+            self.logger.warning(f"Multiple networks: {networks}, not running")
+            return False
+
+        [name] = networks
+        if name in ALLOWED_NETWORKS:
+            self.logger.info(f"Network {name} is whitelisted")
             return True
         else:
-            self.logger.info("Network %s is not whitelisted", wifi)
+            self.logger.info(f"Network {name} is not whitelisted")
             return False
 
     def on_start(self):
@@ -51,8 +60,8 @@ class WrapperComponent(Notify2Component):
                 icon='dialog-question',
             )
             n.set_timeout(EXPIRES_NEVER)
-            n.add_action("error", "<b>Run</b>", lambda n, action: self._run_command())
-            n.add_action("close", "Close", lambda n, action: None)
+            n.add_action("error", "<b>Run</b>", lambda n, action: self._run_command(n))
+            n.add_action("close", "Close", lambda n, action: n.close())
             n.connect('closed', lambda n: self.finish_async())
             n.show()
 
